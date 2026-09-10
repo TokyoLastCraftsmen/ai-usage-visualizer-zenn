@@ -1,0 +1,30 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/mcp-schema.json",
+  "mcpServers": {
+    "deepwiki": {
+      "type": "http",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "env": {}
+    },
+    "rulesync": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "rulesync",
+        "mcp"
+      ],
+      "env": {}
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "@playwright/mcp",
+        "--headless"
+      ],
+      "env": {}
+    }
+  }
+}

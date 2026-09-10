@@ -1,0 +1,24 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/permissions-schema.json",
+  "permission": {
+    "bash": {
+      "git status": "allow",
+      "git diff": "allow",
+      "ls *": "allow",
+      "rm -rf *": "deny",
+      "*": "ask"
+    },
+    "edit": {
+      "src/**": "allow"
+    },
+    "read": {
+      ".env": "deny",
+      "credentials/**": "deny"
+    }
+  },
+  "codexcli": {
+    "approval_policy": "on-request",
+    "approvals_reviewer": "auto_review",
+    "base_permission_profile": ":danger-full-access"
+  }
+}
