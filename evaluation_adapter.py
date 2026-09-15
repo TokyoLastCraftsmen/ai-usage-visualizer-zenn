@@ -70,7 +70,15 @@ def evaluate(conversation_log: str, output_text: str, artifact_name: str = "fina
     artifact_summary = artifact_text or output_text
     artifact_items = [{"name": artifact_name or "final-output.txt", "type": "text/plain", "text": artifact_summary}]
     analyzed = analyzer.analyze(str(conversation_log), artifact_summary, artifact_items=artifact_items)
-    scored = scorer.score(analyzed, str(output_text))
+    scorer_input = analyzed
+    scorer_output_text = str(output_text)
+    if artifact_text and artifact_text == output_text and "文章成果物:" not in scorer_output_text:
+        scorer_input = dict(analyzed)
+        scorer_input["output_text"] = ""
+        scorer_input["artifact_context_text"] = ""
+        scorer_input["actual_output_text"] = str(artifact_text).strip()
+        scorer_output_text = "文章成果物:\n" + scorer_output_text
+    scored = scorer.score(scorer_input, scorer_output_text)
     actions = action_extractor.extract_actions(str(conversation_log))
     raw_scores = scored.get("scores", {}) if isinstance(scored, dict) else {}
     dimensions = {

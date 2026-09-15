@@ -5,3 +5,8 @@ fastapi==0.141.1
 uvicorn==0.49.0
 requests==2.32.5
 beautifulsoup4==4.14.3
+reportlab==4.4.10
+pillow
+qrcode[pil]
+pypdf
+python-pptx
