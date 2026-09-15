@@ -35,10 +35,10 @@ AI Usage Skill Visualizer focuses on that human side of AI use:
 
 The application combines the conversation record with the actual output rather
 than evaluating either one in isolation. A bundled analyzer and scorer produce
-the five-axis evaluation. Gemini then generates artifact-grounded improvement
-suggestions from the evaluation evidence and supplied material. Suggestions are
-presented for human review; the application does not automatically apply them
-or send messages.
+the five-axis evaluation. In the Web UI analysis path, Gemini then generates
+artifact-grounded improvement suggestions from the evaluation evidence and
+supplied material. Suggestions are presented for human review; the application
+does not automatically apply them or send messages.
 
 ## What is evaluated
 
@@ -56,15 +56,16 @@ improvement suggestions tied to the available context.
 ## How it works
 
 ```text
-Conversation log + actual artifact
+Web UI: conversation log + actual artifact
         ↓
-Evaluation adapter → analyzer → scorer
+/api/analyze → evaluation adapter → analyzer / scorer
         ↓
-Overall score + five-axis evaluation + evidence
-        ↓
-Gemini-backed improvement suggestions
-        ↓
-Browser result view, handoff payload, and PDF report
+evaluation result → revision generator → Gemini → improvement suggestions
+
+MCP: client / AI agent → /mcp → evaluation tool → core evaluation result
+
+PDF: browser → /api/report/pdf → evidence-bound prose
+      → ReportLab / pypdf → PDF + QR
 ```
 
 ## Architecture
@@ -81,23 +82,23 @@ flowchart TD
     A --> EA[evaluation_adapter]
     EA --> AN[analyzer]
     AN --> SC[scorer]
-    EA --> SUG[revision suggestion generation]
+    SC --> SUG[revision suggestion generation]
     SUG --> G[Gemini]
-    A --> R[Evaluation result + suggestions]
+    SC --> R[Evaluation result]
+    G --> R2[Improvement suggestions]
 
     P --> PR[pdf_report]
     PR --> PAY[build_report_payload]
     PAY --> EBP[evidence-bound prose]
     EBP --> RL[ReportLab]
     RL --> PP[pypdf]
-    PP --> QR[Page 1 / Page 8 QR verification]
+    PP --> QR[PDF + Page 1 / Page 8 QR verification]
 
     MC[MCP Client / AI Agent] -->|Streamable HTTP| M
     M --> DEMO[evaluate_ai_usage_demo]
     DEMO --> FIXED[Fixed demo JSON]
     M --> EVAL[evaluate_ai_usage]
     EVAL --> EA
-    EA --> R
 
     SM[Secret Manager] -. credentials and QR HMAC secret .-> UI
     AR[Artifact Registry] -. container image .-> UI
@@ -139,6 +140,16 @@ final judgment or responsibility from the person to the agent.
 Production verification completed successfully for `initialize`, `tools/list`,
 and `evaluate_ai_usage_demo`, with no HTTP 404, HTTP 500, or session error.
 
+The production `evaluate_ai_usage` path is core evaluation only:
+
+```text
+/mcp → evaluate_ai_usage → evaluation_adapter → analyzer / scorer
+     → evaluation result
+```
+
+It does not call the revision generator or Gemini, does not return Gemini
+improvement suggestions, and does not generate a PDF or return a `pdf_url`.
+
 ## Chrome Extension
 
 **AI Visualization Log Extractor** is a Chrome extension that extracts AI
@@ -168,7 +179,7 @@ POST /api/report/pdf
 ```
 
 The PDF is generated from the completed evaluation and does not rerun the
-evaluation. Page 1 contains the evaluation-criteria QR code and Page 8 contains
+evaluation. PDF generation is separate from MCP tool calls. Page 1 contains the evaluation-criteria QR code and Page 8 contains
 the verification QR code. QR payloads use HMAC-SHA256 signing; the signing
 secret is supplied through Secret Manager and is not included here.
 
